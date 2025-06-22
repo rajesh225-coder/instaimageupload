@@ -6,6 +6,7 @@ import random
 import time
 
 # --- Cloudinary Configuration ---
+# Fetch Cloudinary credentials from environment variables (GitHub Secrets)
 cloudinary.config(
     cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME"),
     api_key=os.environ.get("CLOUDINARY_API_KEY"),
@@ -14,6 +15,7 @@ cloudinary.config(
 )
 
 # --- Instagram Configuration ---
+# Fetch Instagram credentials from environment variables (GitHub Secrets)
 INSTAGRAM_ACCESS_TOKEN = os.environ.get("INSTAGRAM_ACCESS_TOKEN")
 INSTAGRAM_PAGE_ID = os.environ.get("INSTAGRAM_PAGE_ID")
 
@@ -42,7 +44,10 @@ def get_resources_from_cloudinary_folder(folder_name, resource_type):
         return []
 
 def upload_image_to_instagram(image_url, caption):
-    """Uploads a single image to Instagram feed."""
+    """
+    Uploads a single image to Instagram feed.
+    The 'media_type' parameter should NOT be included for image feed posts.
+    """
     if not INSTAGRAM_ACCESS_TOKEN:
         print("Error: Instagram access token not configured in environment variables.")
         return False
@@ -60,6 +65,7 @@ def upload_image_to_instagram(image_url, caption):
             'caption': caption,
             'access_token': INSTAGRAM_ACCESS_TOKEN,
             'share_to_feed': True
+            # DO NOT include 'media_type': 'IMAGE' here
         }
         container_response = requests.post(container_url, data=container_payload)
         container_data = container_response.json()
@@ -97,12 +103,11 @@ def upload_image_to_instagram(image_url, caption):
         print(f"An unexpected error occurred during Instagram feed image upload: {e}")
         return False
 
-# --- New function for Instagram Stories ---
+# --- Corrected function for Instagram Stories ---
 def upload_image_to_instagram_story(image_url):
     """
     Uploads a single image to Instagram Story.
-    Stories do not have captions in the same way as feed posts.
-    They typically use stickers, links, etc.
+    The 'media_type' must be 'STORY' for stories.
     """
     if not INSTAGRAM_ACCESS_TOKEN:
         print("Error: Instagram access token not configured in environment variables.")
@@ -120,10 +125,10 @@ def upload_image_to_instagram_story(image_url):
         container_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_PAGE_ID}/media"
         container_payload = {
             'image_url': image_url,
-            'media_type': 'STORY', # Explicitly specify STORY media type
+            'media_type': 'STORY', # This is correct for Stories
             'access_token': INSTAGRAM_ACCESS_TOKEN,
-            # Add other Story-specific parameters if needed, e.g., link_sticker
-            # 'link_sticker': '{"link":"https://www.example.com"}'
+            # For stories, 'share_to_feed' is not applicable.
+            # You might add 'link_sticker': '{"link":"https://www.example.com"}' here if needed.
         }
         container_response = requests.post(container_url, data=container_payload)
         container_data = container_response.json()
@@ -138,6 +143,7 @@ def upload_image_to_instagram_story(image_url):
         print(f"Instagram story media container created with ID: {creation_id}.")
 
         # Step 2: Publish the created media container to Story
+        # The publish endpoint is the same as for feed posts, but uses the story's creation_id
         publish_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_PAGE_ID}/media_publish"
         publish_payload = {
             'creation_id': creation_id,
@@ -173,16 +179,17 @@ def main():
         print(f"No images found in Cloudinary folder: '{image_folder_name}'. Exiting.")
         return
 
-    # --- Option 1: Post to Instagram Feed (as before) ---
+    # --- Option 1: Post to Instagram Feed ---
     selected_feed_image_url = random.choice(all_image_urls)
     feed_image_caption = "Here's your daily dose of inspiration! ✨ #quotes #motivation #inspiration #dailyquotes"
     print(f"\n--- Preparing to post random image to Instagram Feed: {selected_feed_image_url} ---")
     upload_image_to_instagram(selected_feed_image_url, feed_image_caption)
 
-    # --- Option 2: Post to Instagram Story (new) ---
-    # You might want to pick a different image for the story, or the same one.
+    # --- Option 2: Post to Instagram Story ---
     selected_story_image_url = random.choice(all_image_urls)
     print(f"\n--- Preparing to post random image to Instagram Story: {selected_story_image_url} ---")
+    # For stories, the recommended aspect ratio is 9:16 (1080x1920 pixels).
+    # Ensure your images in Cloudinary for stories are optimized for this ratio.
     upload_image_to_instagram_story(selected_story_image_url)
 
 if __name__ == "__main__":
