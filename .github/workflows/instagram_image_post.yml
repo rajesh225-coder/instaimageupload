@@ -1,5 +1,4 @@
----
-name: Post Random Quote Image to Instagram
+name: Post Random Quote Image to Social Media # Changed name to reflect multi-platform posting
 
 on:
   schedule:
@@ -30,7 +29,7 @@ jobs:
       - name: Install dependencies
         run: pip install cloudinary requests
 
-      - name: Run Instagram Image Post Script
+      - name: Run Social Media Post Script
         env:
           # Your Cloudinary credentials (from GitHub Secrets)
           CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
@@ -39,4 +38,7 @@ jobs:
           # Your Instagram credentials (from GitHub Secrets)
           INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
           INSTAGRAM_PAGE_ID: ${{ secrets.INSTAGRAM_PAGE_ID }}
+          # Your Facebook credentials (from GitHub Secrets) - NEWLY ADDED
+          FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
+          FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
         run: python post_quote_image.py # Make sure this matches your Python file name
