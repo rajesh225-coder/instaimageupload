@@ -21,7 +21,7 @@ INSTAGRAM_PAGE_ID = os.environ.get("INSTAGRAM_PAGE_ID")
 
 def get_resources_from_cloudinary_folder(folder_name, resource_type):
     """
-    Fetches resource URLs (images) from a specified Cloudinary folder.
+    Fetches resource URLs (images or videos) from a specified Cloudinary folder.
     """
     try:
         if not cloudinary.config().cloud_name or \
@@ -43,10 +43,10 @@ def get_resources_from_cloudinary_folder(folder_name, resource_type):
         print(f"Error fetching {resource_type}s from Cloudinary: {e}")
         return []
 
-def upload_image_to_instagram(image_url, caption):
+def upload_image_to_instagram_feed(image_url, caption):
     """
     Uploads a single image to Instagram feed.
-    The 'media_type' parameter should NOT be included for image feed posts.
+    No 'media_type' parameter is used for image feed posts.
     """
     if not INSTAGRAM_ACCESS_TOKEN:
         print("Error: Instagram access token not configured in environment variables.")
@@ -64,14 +64,13 @@ def upload_image_to_instagram(image_url, caption):
             'image_url': image_url,
             'caption': caption,
             'access_token': INSTAGRAM_ACCESS_TOKEN,
-            'share_to_feed': True
-            # DO NOT include 'media_type': 'IMAGE' here
+            'share_to_feed': True # Ensure it appears on the profile grid
         }
-        container_response = requests.post(container_url, data=container_payload)
-        container_data = container_response.json()
+        response = requests.post(container_url, data=container_payload)
+        container_data = response.json()
 
         if 'id' not in container_data:
-            print(f"Error creating Instagram feed container for image. Response: {container_data}")
+            print(f"Error creating Instagram feed container. Response: {container_data}")
             if 'error' in container_data and 'error_user_msg' in container_data['error']:
                 print(f"Instagram API Error Message: {container_data['error']['error_user_msg']}")
             return False
@@ -79,11 +78,13 @@ def upload_image_to_instagram(image_url, caption):
         creation_id = container_data['id']
         print(f"Instagram feed media container created with ID: {creation_id}.")
 
+        # Publish the media container
         publish_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_PAGE_ID}/media_publish"
         publish_payload = {
             'creation_id': creation_id,
             'access_token': INSTAGRAM_ACCESS_TOKEN
         }
+        print(f"Publishing image to Instagram Feed with creation ID: {creation_id}")
         publish_response = requests.post(publish_url, data=publish_payload)
         publish_data = publish_response.json()
 
@@ -103,11 +104,10 @@ def upload_image_to_instagram(image_url, caption):
         print(f"An unexpected error occurred during Instagram feed image upload: {e}")
         return False
 
-# --- Corrected function for Instagram Stories ---
 def upload_image_to_instagram_story(image_url):
     """
     Uploads a single image to Instagram Story.
-    The 'media_type' must be 'STORY' for stories.
+    Requires 'media_type': 'STORY'.
     """
     if not INSTAGRAM_ACCESS_TOKEN:
         print("Error: Instagram access token not configured in environment variables.")
@@ -125,13 +125,13 @@ def upload_image_to_instagram_story(image_url):
         container_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_PAGE_ID}/media"
         container_payload = {
             'image_url': image_url,
-            'media_type': 'STORY', # This is correct for Stories
+            'media_type': 'STORY', # This is correct and required for Stories
             'access_token': INSTAGRAM_ACCESS_TOKEN,
-            # For stories, 'share_to_feed' is not applicable.
-            # You might add 'link_sticker': '{"link":"https://www.example.com"}' here if needed.
+            # For stories, you can add 'link_sticker' or other story-specific features here
+            # e.g., 'link_sticker': '{"link":"https://www.example.com"}'
         }
-        container_response = requests.post(container_url, data=container_payload)
-        container_data = container_response.json()
+        response = requests.post(container_url, data=container_payload)
+        container_data = response.json()
 
         if 'id' not in container_data:
             print(f"Error creating Instagram story container. Response: {container_data}")
@@ -179,18 +179,27 @@ def main():
         print(f"No images found in Cloudinary folder: '{image_folder_name}'. Exiting.")
         return
 
-    # --- Option 1: Post to Instagram Feed ---
+    # --- Post to Instagram Feed ---
     selected_feed_image_url = random.choice(all_image_urls)
     feed_image_caption = "Here's your daily dose of inspiration! ✨ #quotes #motivation #inspiration #dailyquotes"
-    print(f"\n--- Preparing to post random image to Instagram Feed: {selected_feed_image_url} ---")
-    upload_image_to_instagram(selected_feed_image_url, feed_image_caption)
+    success_feed = upload_image_to_instagram_feed(selected_feed_image_url, feed_image_caption)
+    if success_feed:
+        print(f"\nRandom image upload process to Instagram Feed completed successfully!")
+    else:
+        print(f"\nFailed to upload the random image to Instagram Feed.")
 
-    # --- Option 2: Post to Instagram Story ---
+
+    # --- Post to Instagram Story ---
     selected_story_image_url = random.choice(all_image_urls)
-    print(f"\n--- Preparing to post random image to Instagram Story: {selected_story_image_url} ---")
-    # For stories, the recommended aspect ratio is 9:16 (1080x1920 pixels).
+    # Important: Stories work best with 9:16 aspect ratio (e.g., 1080x1920 pixels).
     # Ensure your images in Cloudinary for stories are optimized for this ratio.
-    upload_image_to_instagram_story(selected_story_image_url)
+    print(f"\n--- Preparing to post random image to Instagram Story: {selected_story_image_url} ---")
+    success_story = upload_image_to_instagram_story(selected_story_image_url)
+    if success_story:
+        print(f"\nRandom image upload process to Instagram Story completed successfully!")
+    else:
+        print(f"\nFailed to upload the random image to Instagram Story.")
+
 
 if __name__ == "__main__":
     main()
