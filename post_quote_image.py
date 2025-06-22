@@ -6,6 +6,7 @@ import random
 import time
 
 # --- Cloudinary Configuration ---
+# Fetch Cloudinary credentials from environment variables (GitHub Secrets)
 cloudinary.config(
     cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME"),
     api_key=os.environ.get("CLOUDINARY_API_KEY"),
@@ -14,6 +15,7 @@ cloudinary.config(
 )
 
 # --- Instagram Configuration ---
+# Fetch Instagram credentials from environment variables (GitHub Secrets)
 INSTAGRAM_ACCESS_TOKEN = os.environ.get("INSTAGRAM_ACCESS_TOKEN")
 INSTAGRAM_PAGE_ID = os.environ.get("INSTAGRAM_PAGE_ID")
 
@@ -58,16 +60,13 @@ def upload_image_to_instagram_feed(image_url, caption):
         print(f"Creating Instagram media container for image: {image_url}")
 
         container_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_PAGE_ID}/media"
-        # Construct payload clearly. 'media_type' is INTENTIONALLY ABSENT for images.
         container_payload = {
             'image_url': image_url,
             'caption': caption,
             'access_token': INSTAGRAM_ACCESS_TOKEN,
             'share_to_feed': True # Ensure it appears on the profile grid
         }
-
-        # Explicitly set headers for content type
-        headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+        headers = {'Content-Type': 'application/x-www-form-urlencoded'} # Explicit header
 
         response = requests.post(container_url, data=container_payload, headers=headers)
         container_data = response.json()
@@ -123,15 +122,12 @@ def upload_image_to_instagram_story(image_url):
         print(f"Creating Instagram story container for image: {image_url}")
 
         container_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_PAGE_ID}/media"
-        # Construct payload clearly. 'media_type' MUST BE 'STORY' for stories.
         container_payload = {
             'image_url': image_url,
             'media_type': 'STORY', # This is correct and required for Stories
             'access_token': INSTAGRAM_ACCESS_TOKEN,
         }
-
-        # Explicitly set headers for content type
-        headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+        headers = {'Content-Type': 'application/x-www-form-urlencoded'} # Explicit header
 
         response = requests.post(container_url, data=container_payload, headers=headers)
         container_data = response.json()
