@@ -24,7 +24,6 @@ def get_resources_from_cloudinary_folder(folder_name, resource_type):
     Fetches resource URLs (images) from a specified Cloudinary folder.
     """
     try:
-        # Check if Cloudinary credentials are set from environment variables
         if not cloudinary.config().cloud_name or \
            not cloudinary.config().api_key or \
            not cloudinary.config().api_secret:
@@ -35,7 +34,7 @@ def get_resources_from_cloudinary_folder(folder_name, resource_type):
             type="upload",
             resource_type=resource_type,
             prefix=f"{folder_name}/",
-            max_results=500 # Adjust as needed to ensure all images are fetched
+            max_results=500
         )
         resource_urls = [resource['secure_url'] for resource in result.get('resources', [])]
         print(f"Successfully fetched {len(resource_urls)} {resource_type}s from Cloudinary folder '{folder_name}'.")
@@ -63,7 +62,7 @@ def upload_image_to_instagram(image_url, caption):
             'image_url': image_url,
             'caption': caption,
             'access_token': INSTAGRAM_ACCESS_TOKEN,
-            'share_to_feed': True
+            # REMOVE 'media_type': 'IMAGE' from here. It's not needed for images.
         }
         container_response = requests.post(container_url, data=container_payload)
         container_data = container_response.json()
