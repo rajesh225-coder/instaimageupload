@@ -1,0 +1,42 @@
+---
+name: Post Random Quote Image to Instagram
+
+on:
+  schedule:
+    # Runs every 4 hours
+    # The cron syntax '0 */4 * * *' means:
+    # - 0: at minute 0 (top of the hour)
+    # - */4: every 4th hour
+    # - *: every day of the month
+    # - *: every month
+    # - *: every day of the week
+    - cron: '0 */4 * * *'
+  workflow_dispatch:
+    # Allows you to manually trigger the workflow from the GitHub Actions tab
+
+jobs:
+  post-image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x' # Use a specific Python version, e.g., '3.9', '3.10', '3.11'
+
+      - name: Install dependencies
+        run: pip install cloudinary requests
+
+      - name: Run Instagram Image Post Script
+        env:
+          # Your Cloudinary credentials (from GitHub Secrets)
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+          # Your Instagram credentials (from GitHub Secrets)
+          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+          INSTAGRAM_PAGE_ID: ${{ secrets.INSTAGRAM_PAGE_ID }}
+        run: python post_quote_image.py # Make sure this matches your Python file name
